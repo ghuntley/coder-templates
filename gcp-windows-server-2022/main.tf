@@ -130,7 +130,8 @@ resource "google_compute_instance" "dev" {
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 
     # Install Git and reload path
-    choco install -y git
+    choco install -y git -params '"/GitAndUnixToolsOnPath /WindowsTerminal"'
+    choco install -y git-credential-manager-for-windows
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     
@@ -188,6 +189,75 @@ resource "coder_agent" "main" {
     # Enable RDP through Windows Firewall
     Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
     choco feature enable -n=allowGlobalConfirmation
+
+    #--- Apps ---
+    choco install -y 7zip
+    choco install -y 7zip.commandline
+    choco install -y ack
+    choco install -y curl
+    choco install -y fiddler
+    choco install -y filezilla
+    choco install -y paint.net
+    choco install -y sudo
+
+    #--- Browsers ---
+    choco install -y firefox
+    choco install -y firefox-dev
+    choco install -y googlechrome
+    choco install -y googlechrome.canary
+    choco install -y microsoft-edge
+
+    #--- Sysadmin ---
+    choco install -y putty
+    choco install -y sysinternals
+    choco install -y windirstat
+    choco install -y winscp
+
+    #--- Development ---
+    choco install -y dotpeek
+    choco install -y linqpad5
+    
+    choco install -y java.jdk
+    choco install -y javaruntime
+
+    choco install -y visualstudiocode-insiders
+    choco install -y vscode
+
+    choco install -y microsoft-windows-terminal
+
+    Install-Module posh-git -Scope CurrentUser -Force -SkipPublisherCheck
+    Install-Module oh-my-posh -Scope CurrentUser -Force -SkipPublisherCheck
+    Install-Module -Name PSReadLine -Scope CurrentUser -Force -SkipPublisherCheck
+
+    echo "Import-Module posh-git" > $PROFILE
+    echo "Import-Module oh-my-posh" >> $PROFILE
+    echo "Set-Theme Paradox" >> $PROFILE
+
+    # Hide Search button / box
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "SearchboxTaskbarMode" -Type DWord -Value 0
+
+    # Hide Task View button
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ShowTaskViewButton" -Type DWord -Value 0
+
+    # Show titles in taskbar
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarGlomLevel" -Type DWord -Value 1
+
+    # Show small icons in taskbar
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarSmallIcons" -Type DWord -Value 1
+
+    # Show known file extensions
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "HideFileExt" -Type DWord -Value 0
+
+    # Show hidden files
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "Hidden" -Type DWord -Value 1
+
+    # Show Computer shortcut on desktop
+    If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu")) {
+      New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu" | Out-Null
+    }
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu" -Name "{20D04FE0-3AEA-1069-A2D8-08002B30309D}" -Type DWord -Value 0
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" -Name "{20D04FE0-3AEA-1069-A2D8-08002B30309D}" -Type DWord -Value 0
+
 EOF
 
 }
