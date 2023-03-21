@@ -225,13 +225,13 @@ resource "coder_agent" "main" {
 
     choco install -y microsoft-windows-terminal
 
-    Install-Module posh-git -Scope CurrentUser -Force -SkipPublisherCheck
-    Install-Module oh-my-posh -Scope CurrentUser -Force -SkipPublisherCheck
-    Install-Module -Name PSReadLine -Scope CurrentUser -Force -SkipPublisherCheck
+    #Install-Module posh-git -Scope CurrentUser -Force -SkipPublisherCheck
+    #Install-Module oh-my-posh -Scope CurrentUser -Force -SkipPublisherCheck
+    #Install-Module -Name PSReadLine -Scope CurrentUser -Force -SkipPublisherCheck
 
-    echo "Import-Module posh-git" > $PROFILE
-    echo "Import-Module oh-my-posh" >> $PROFILE
-    echo "Set-Theme Paradox" >> $PROFILE
+    #echo "Import-Module posh-git" > $PROFILE
+    #echo "Import-Module oh-my-posh" >> $PROFILE
+    #echo "Set-Theme Paradox" >> $PROFILE
 
     # Hide Search button / box
     Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "SearchboxTaskbarMode" -Type DWord -Value 0
