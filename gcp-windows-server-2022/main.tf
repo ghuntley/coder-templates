@@ -29,6 +29,7 @@ data "coder_parameter" "gcp_zone" {
   option {
     name  = "Sydney, Australia, APAC"
     value = "australia-southeast1-a"
+    icon = "/emojis/1f1e6-1f1fa.png"
   }
   option {
     name  = "North America (Central)"
@@ -46,8 +47,8 @@ data "coder_parameter" "gcp_machine_type" {
   name    = "What size should your workspace be?"
   type    = "string"
   default = "e2-medium"
-  icon    = "/emojis/1f30e.png"
-  mutable = false
+  icon    = "/emojis/1f4b0.png"
+  mutable = true
   option {
     name  = "e2-medium - 2vcpu - 4gb - $28.32 USD/month"
     value = "e2-medium"
