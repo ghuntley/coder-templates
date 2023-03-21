@@ -3,10 +3,10 @@ name: Push template to coder server
 on:
   push:
     branches:
-      - main
+      - trunk
   pull_request:
     branches:
-      - main
+      - trunk
   workflow_dispatch:
 
 jobs:
