@@ -62,6 +62,7 @@ RUN apt-get update && apt-get install --yes \
 	rsync \
 	shellcheck \
 	strace \
+	stow \
 	sudo \
 	tcptraceroute \
 	termshark \
