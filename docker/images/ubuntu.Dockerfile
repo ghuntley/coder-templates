@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install --yes \
 	apt-utils \
 	bash \
 	bash-completion \
+	bat \
 	bats \
 	bind9-dnsutils \
 	build-essential \
@@ -66,6 +67,7 @@ RUN apt-get update && apt-get install --yes \
 	sudo \
 	tcptraceroute \
 	termshark \
+	tmux \
 	traceroute \
 	vim \
 	wget \
@@ -82,6 +84,9 @@ RUN apt-get update && apt-get install --yes \
 	apt-get clean && \
 	# Configure FIPS-compliant policies
 	update-crypto-policies --set FIPS
+
+# Install starship
+RUN curl -sS https://starship.rs/install.sh | sh
 
 # Install Lazygit
 # See https://github.com/jesseduffield/lazygit#ubuntu
