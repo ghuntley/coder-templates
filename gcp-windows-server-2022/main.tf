@@ -71,6 +71,13 @@ data "coder_parameter" "gcp_image" {
   }
 }
 
+data "coder_parameter" "admin_password" {
+  name = "Administrator password for logging in via RDP"
+  description = "Must meet Windows password complexity requirements: https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/password-must-meet-complexity-requirements#reference"
+  default = "Hunter2!Hunter2"
+  mutable = true
+}
+
 provider "google" {
   zone    = data.coder_parameter.gcp_zone.value
   project = data.coder_parameter.gcp_project_id.value
@@ -92,13 +99,6 @@ resource "google_compute_disk" "root" {
   }
 }
 
-resource "coder_agent" "main" {
-  auth = "google-instance-identity"
-  arch = "amd64"
-  os   = "windows"
-
-  login_before_ready = false
-}
 
 resource "google_compute_instance" "dev" {
   zone         = data.coder_parameter.gcp_zone.value
@@ -120,18 +120,76 @@ resource "google_compute_instance" "dev" {
     scopes = ["cloud-platform"]
   }
   metadata = {
-    windows-startup-script-ps1 = coder_agent.main.init_script
     serial-port-enable         = "TRUE"
+    windows-startup-script-ps1 = <<EOF
+
+    # Install Chocolatey package manager before
+    # the agent starts to use via startup_script
+    Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+    # Reload path so sessions include "choco" and "refreshenv"
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+
+    # Install Git and reload path
+    choco install -y git
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    
+    # start Coder agent init script (see startup_script above)
+    ${coder_agent.main.init_script}
+
+    EOF
   }
 }
+
+
 resource "coder_metadata" "workspace_info" {
   count       = data.coder_workspace.me.start_count
   resource_id = google_compute_instance.dev[0].id
 
   item {
-    key   = "type"
-    value = google_compute_instance.dev[0].machine_type
+    key       = "Administrator password"
+    value     = data.coder_parameter.admin_password.value
+    sensitive = true
+  }  
+
+  item {
+    key   = "image"
+    value = data.coder_parameter.gcp_image.value
+  }  
+
+  item {
+    key   = "zone"
+    value = data.coder_parameter.gcp_zone.value
   }
+
+  item {
+    key   = "project"
+    value = data.coder_parameter.gcp_project_id.value
+  }
+
+
+}
+
+resource "coder_agent" "main" {
+  auth = "google-instance-identity"
+  arch = "amd64"
+  os   = "windows"
+  
+  login_before_ready = false
+  
+  startup_script = <<EOF
+    # Set admin password and enable admin user (must be in this order)
+    Get-LocalUser -Name "Administrator" | Set-LocalUser -Password (ConvertTo-SecureString -AsPlainText "${data.coder_parameter.admin_password.value}" -Force)
+    Get-LocalUser -Name "Administrator" | Enable-LocalUser
+
+    # Enable RDP
+    Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -value 0
+
+    # Enable RDP through Windows Firewall
+    Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+    choco feature enable -n=allowGlobalConfirmation
+EOF
+
 }
 
 resource "coder_metadata" "home_info" {
