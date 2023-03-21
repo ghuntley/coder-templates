@@ -25,11 +25,11 @@ jobs:
           curl -L https://coder.com/install.sh | sh
       - name: "Push template"
         run: |
-          coder templates push docker --directory ./docker
+          coder templates push --directory ./docker
           --name ${{ steps.vars.outputs.sha_short }} /
           --yes
 
-          coder templates push docker-ubuntu-desktop --directory ./docker-ubuntu-desktop
+          coder templates push --directory ./docker-ubuntu-desktop
           --name ${{ steps.vars.outputs.sha_short }} /
           --yes
 env:
