@@ -23,12 +23,8 @@ data "coder_workspace" "me" {
 
 data "coder_parameter" "dotfiles_uri" {
   name        = "What dotfiles repo would you like to use for your workspace?"
-  description = <<-EOF
-  Dotfiles repo URI (optional)
-
-  see https://dotfiles.github.io
-  EOF
-  default     = ""
+  description = "Dotfiles repo URI (optional)"
+  default     = "https://github.com/ghuntley/dotfiles"
   type        = "string"
   mutable     = true
 }
