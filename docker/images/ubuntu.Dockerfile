@@ -88,6 +88,11 @@ RUN apt-get update && apt-get install --yes \
 # Install starship
 RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes
 
+# See https://github.com/cli/cli/issues/6175#issuecomment-1235984381 for proof
+# the apt repository is unreliable
+RUN curl -L https://github.com/cli/cli/releases/download/v2.25.0/gh_2.25.0_linux_amd64.deb -o gh.deb && \
+	dpkg -i gh.deb
+
 # Install Lazygit
 # See https://github.com/jesseduffield/lazygit#ubuntu
 RUN LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep '"tag_name":' |  sed -E 's/.*"v*([^"]+)".*/\1/') && \
