@@ -86,7 +86,7 @@ RUN apt-get update && apt-get install --yes \
 	update-crypto-policies --set FIPS
 
 # Install starship
-RUN curl -sS https://starship.rs/install.sh | sh
+RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes
 
 # Install Lazygit
 # See https://github.com/jesseduffield/lazygit#ubuntu
