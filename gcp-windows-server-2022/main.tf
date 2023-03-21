@@ -148,7 +148,7 @@ resource "coder_metadata" "workspace_info" {
   resource_id = google_compute_instance.dev[0].id
 
   item {
-    key       = "Administrator password"
+    key       = "administrator password"
     value     = data.coder_parameter.admin_password.value
     sensitive = true
   }  
