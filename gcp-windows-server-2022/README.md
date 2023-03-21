@@ -5,7 +5,7 @@ tags: [cloud, google]
 icon: /icon/gcp.png
 ---
 
-# gcp-windows
+# gcp-windows-server-2022
 
 To get started, run `coder templates init`. When prompted, select this template,
 and follow the on-screen instructions to proceed.

@@ -55,6 +55,22 @@ data "coder_parameter" "gcp_machine_type" {
   }
 }
 
+data "coder_parameter" "gcp_image" {
+  name    = "What edition of Windows Server 2022 should your workspace be?"
+  type    = "string"
+  default = "windows-server-2022-dc-v20230315"
+  icon    = "/emojis/1fa9f.png"
+  mutable = true
+  option {
+    name  = "Desktop"
+    value = "windows-server-2022-dc-v20230315"
+  }
+  option {
+    name  = "Core"
+    value = "windows-server-2022-dc-core-v20230315"
+  }
+}
+
 provider "google" {
   zone    = data.coder_parameter.gcp_zone.value
   project = data.coder_parameter.gcp_project_id.value
@@ -70,7 +86,7 @@ resource "google_compute_disk" "root" {
   name  = "coder-${data.coder_workspace.me.id}-root"
   type  = "pd-ssd"
   zone  = data.coder_parameter.gcp_zone.value
-  image = "projects/windows-cloud/global/images/windows-server-2022-dc-core-v20220215"
+  image = data.coder_parameter.gcp_image.value
   lifecycle {
     ignore_changes = [name, image]
   }
