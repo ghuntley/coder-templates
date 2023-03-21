@@ -44,6 +44,7 @@ resource "coder_agent" "main" {
     set -e
     if [ -n "$DOTFILES_URI" ]; then
       echo "Installing dotfiles from $DOTFILES_URI"
+      rm .bashrc
       coder dotfiles -y "$DOTFILES_URI"
     fi
 
