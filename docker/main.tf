@@ -133,6 +133,34 @@ resource "docker_volume" "home_volume" {
   }
 }
 
+resource "docker_volume" "nix_volume" {
+  name = "coder-${data.coder_workspace.me.id}-nix"
+  # Protect the volume from being deleted due to changes in attributes.
+  lifecycle {
+    ignore_changes = all
+  }
+  # Add labels in Docker to keep track of orphan resources.
+  labels {
+    label = "coder.owner"
+    value = data.coder_workspace.me.owner
+  }
+  labels {
+    label = "coder.owner_id"
+    value = data.coder_workspace.me.owner_id
+  }
+  labels {
+    label = "coder.workspace_id"
+    value = data.coder_workspace.me.id
+  }
+  # This field becomes outdated if the workspace is renamed but can
+  # be useful for debugging or cleaning out dangling volumes.
+  labels {
+    label = "coder.workspace_name_at_creation"
+    value = data.coder_workspace.me.name
+  }
+}
+
+
 resource "docker_image" "coder_image" {
   name = "coder-base-${data.coder_workspace.me.owner}-${lower(data.coder_workspace.me.name)}"
   build {
@@ -172,6 +200,11 @@ resource "docker_container" "workspace" {
   volumes {
     container_path = "/home/ghuntley/"
     volume_name    = docker_volume.home_volume.name
+    read_only      = false
+  }
+  volumes {
+    container_path = "/nix/"
+    volume_name    = docker_volume.nix_volume.name
     read_only      = false
   }
   # Add labels in Docker to keep track of orphan resources.
