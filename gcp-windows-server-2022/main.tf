@@ -193,34 +193,34 @@ resource "coder_agent" "main" {
     #--- Apps ---
     choco install -y 7zip
     choco install -y 7zip.commandline
-    choco install -y ack
-    choco install -y curl
-    choco install -y fiddler
-    choco install -y filezilla
-    choco install -y paint.net
+    #choco install -y ack
+    #choco install -y curl
+    #choco install -y fiddler
+    #choco install -y filezilla
+    #choco install -y paint.net
     choco install -y sudo
 
     #--- Browsers ---
-    choco install -y firefox
-    choco install -y firefox-dev
+    #choco install -y firefox
+    #choco install -y firefox-dev
     choco install -y googlechrome
-    choco install -y googlechrome.canary
-    choco install -y microsoft-edge
+    #choco install -y googlechrome.canary
+    #choco install -y microsoft-edge
 
     #--- Sysadmin ---
-    choco install -y putty
-    choco install -y sysinternals
-    choco install -y windirstat
-    choco install -y winscp
+    #choco install -y putty
+    #choco install -y sysinternals
+    #choco install -y windirstat
+    #choco install -y winscp
 
     #--- Development ---
     choco install -y dotpeek
     choco install -y linqpad5
     
-    choco install -y java.jdk
-    choco install -y javaruntime
+    #choco install -y java.jdk
+    #choco install -y javaruntime
 
-    choco install -y visualstudiocode-insiders
+    #choco install -y visualstudiocode-insiders
     choco install -y vscode
 
     choco install -y microsoft-windows-terminal
