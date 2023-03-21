@@ -25,10 +25,14 @@ jobs:
           curl -L https://coder.com/install.sh | sh
       - name: "Push template"
         run: |
-          coder templates push <template-name> /--directory ./<template-directory> /
+          coder templates push docker --directory ./docker
           --name ${{ steps.vars.outputs.sha_short }} /
           --yes
-        env:
+
+          coder templates push docker-ubuntu-desktop --directory ./docker-ubuntu-desktop
+          --name ${{ steps.vars.outputs.sha_short }} /
+          --yes
+env:
           # Consumed by Coder CLI
           CODER_URL: https://ghuntley.dev
           CODER_SESSION_TOKEN: ${{ secrets.CODER_SESSION_TOKEN }}
