@@ -88,6 +88,22 @@ data "coder_parameter" "docker_image" {
   }
 }
 
+data "coder_parameter" "container_enable_dind" {
+  name        = "Enable Docker in Docker in Docker?"
+  description = "This is insecure"
+  default     = "false"
+  type        = "bool"
+  mutable     = true
+  option {
+    name  = "false"
+    value = false
+  }
+  option {
+    name  = "true"
+    value = true
+  }
+}
+
 resource "docker_volume" "home_volume" {
   name = "coder-${data.coder_workspace.me.id}-home"
   # Protect the volume from being deleted due to changes in attributes.
@@ -131,9 +147,9 @@ resource "docker_image" "coder_image" {
 resource "docker_container" "workspace" {
 
   # enable docker-in-docker-in-docker nb: reduces security 
-  privileged = true
+  privileged = data.coder_parameter.container_enable_dind.value
   mounts {
-    source = "/var/run/docker.sock"
+    source = data.coder_parameter.container_enable_dind.value ? "/var/run/docker.sock" : "/dev/null"
     target = "/var/run/docker.sock"
     type = "bind"
   }
