@@ -172,6 +172,9 @@ resource "docker_image" "coder_image" {
 
 resource "docker_container" "workspace" {
 
+  # Use the Sysbox container runtime
+  # runtime = "sysbox-runc"
+
   # enable docker-in-docker-in-docker nb: reduces security 
   privileged = data.coder_parameter.container_enable_dind.value
   mounts {

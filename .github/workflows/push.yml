@@ -29,6 +29,10 @@ jobs:
             --name ${{ steps.vars.outputs.sha_short }} \
             --yes
 
+          coder templates push --directory ./gcp-windows \
+            --name ${{ steps.vars.outputs.sha_short }} \
+            --yes
+
           #coder templates push --directory ./docker-vnc-ubuntu \
           #  --name ${{ steps.vars.outputs.sha_short }} \
           #  --yes
