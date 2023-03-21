@@ -138,5 +138,9 @@ RUN . /home/ghuntley/.nix-profile/etc/profile.d/nix.sh \
     cachix use devenv && \
     nix-env -if https://github.com/cachix/devenv/tarball/latest
 
+# Start SSH service
+RUN service ssh start
+EXPOSE 22
+
 # Run as
 USER ghuntley
