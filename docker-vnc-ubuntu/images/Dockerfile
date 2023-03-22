@@ -116,28 +116,6 @@ USER ghuntley
 ENV USER ghuntley
 WORKDIR /home/ghuntley
 
-RUN touch .bash_profile \
- && curl https://nixos.org/releases/nix/nix-2.9.2/install | sh
-
-RUN echo '. /home/ghuntley/.nix-profile/etc/profile.d/nix.sh' >> /home/ghuntley/.bashrc
-RUN mkdir -p /home/ghuntley/.config/nixpkgs && echo '{ allowUnfree = true; }' >> /home/ghuntley/.config/nixpkgs/config.nix
-
-# Install cachix
-RUN . /home/ghuntley/.nix-profile/etc/profile.d/nix.sh \
-  && nix-env -iA cachix -f https://cachix.org/api/v1/install \
-  && cachix use cachix
-
-# Install direnv
-RUN . /home/ghuntley/.nix-profile/etc/profile.d/nix.sh \
-  && nix-env -i direnv \
-  && direnv hook bash >> /home/ghuntley/.bashrc
-
-# Install devenv
-RUN . /home/ghuntley/.nix-profile/etc/profile.d/nix.sh \
-	nix-env -iA cachix -f https://cachix.org/api/v1/install && \
-    cachix use devenv && \
-    nix-env -if https://github.com/cachix/devenv/tarball/latest
-
 # Start SSH service
 EXPOSE 22
 CMD ["/usr/sbin/sshd","-D"]

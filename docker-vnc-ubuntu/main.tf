@@ -51,10 +51,20 @@ resource "coder_agent" "main" {
     # start novnc
     # https://github.com/Frederic-Boulanger-UPS/docker-ubuntu-novnc/tree/master
     export RESOLUTION=1920x1080
+    export USERNAME=`id -u ghuntley`
+    export USERID=`id -u ghuntley`
+    export PASSWORD="${data.coder_parameter.admin_password.value}"
     /startup.sh >/tmp/novnc.log 2>&1 &
 
   EOT
 }
+
+data "coder_parameter" "admin_password" {
+  name = "Password for logging in via VNC"
+  default = "Hunter2!Hunter2"
+  mutable = true
+}
+
 
 resource "coder_app" "novnc" {
   agent_id     = coder_agent.main.id
@@ -232,6 +242,12 @@ resource "coder_metadata" "container_info" {
   count       = data.coder_workspace.me.start_count
   resource_id = docker_container.workspace[0].id
 
+  item {
+      key       = "administrator password"
+      value     = data.coder_parameter.admin_password.value
+      sensitive = true
+  }  
+    
   item {
     key   = "image"
     value = docker_image.coder_image.name
