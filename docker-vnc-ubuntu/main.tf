@@ -111,7 +111,7 @@ resource "coder_agent" "main" {
     fi
 
     # https://github.com/Frederic-Boulanger-UPS/docker-ubuntu-novnc/tree/master
-    RESOLUTION=1920x1080 
+    export RESOLUTION=1920x1080
     /startup.sh >/tmp/novnc.log 2>&1 &
 
   EOT
