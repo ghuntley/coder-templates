@@ -101,14 +101,32 @@ resource "coder_agent" "main" {
     # Install starship
     curl -sS https://starship.rs/install.sh | sh -s -- --yes
 
-    # install and start code-server
-    curl -fsSL https://code-server.dev/install.sh | sh -s -- --method=standalone --prefix=/tmp/code-server --version 4.8.3
-    /tmp/code-server/bin/code-server --auth none --port 13337 >/tmp/code-server.log 2>&1 &
+    # See https://github.com/cli/cli/issues/6175#issuecomment-1235984381 for proof
+    # the apt repository is unreliable
+    curl -L https://github.com/cli/cli/releases/download/v2.25.0/gh_2.25.0_linux_amd64.deb -o gh.deb && \
+      dpkg -i gh.deb && rm gh.deb
+
+    curl https://nixos.org/releases/nix/nix-2.9.2/install | sh
+
+    nix-env -iA cachix -f https://cachix.org/api/v1/install \
+      && cachix use cachix
+
+    nix-env -i direnv \
+      direnv hook bash >> /root/.bashrc
+
+    nix-env -iA cachix -f https://cachix.org/api/v1/install && \
+      cachix use devenv && \
+      nix-env -if https://github.com/cachix/devenv/tarball/latest
 
     if [ -n "$DOTFILES_URI" ]; then
       echo "Installing dotfiles from $DOTFILES_URI"
       coder dotfiles "$DOTFILES_URI" --yes
     fi
+
+    # install and start code-server
+    curl -fsSL https://code-server.dev/install.sh | sh -s -- --method=standalone --prefix=/tmp/code-server --version 4.8.3
+    /tmp/code-server/bin/code-server --auth none --port 13337 >/tmp/code-server.log 2>&1 &
+
 
     # https://github.com/Frederic-Boulanger-UPS/docker-ubuntu-novnc/tree/master
     export RESOLUTION=1920x1080
