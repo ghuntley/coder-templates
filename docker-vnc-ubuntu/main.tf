@@ -39,6 +39,68 @@ resource "coder_agent" "main" {
   startup_script         = <<-EOT
     set -e
     
+    sudo apt-get update && apt-get update && apt-get install --yes \
+      apt-transport-https \
+      apt-utils \
+      bash \
+      bash-completion \
+      bat \
+      bats \
+      bind9-dnsutils \
+      build-essential \
+      ca-certificates \
+      cmake \
+      crypto-policies \
+      curl \
+      fd-find \
+      file \
+      git \
+      gnupg \
+      graphviz \
+      htop \
+      httpie \
+      inetutils-tools \
+      iproute2 \
+      iputils-ping \
+      iputils-tracepath \
+      jq \
+      language-pack-en \
+      less \
+      lsb-release \
+      man \
+      meld \
+      net-tools \
+      openssh-server \
+      openssl \
+      pkg-config \
+      python3 \
+      python3-pip \
+      rsync \
+      shellcheck \
+      strace \
+      stow \
+      sudo \
+      tcptraceroute \
+      termshark \
+      tmux \
+      traceroute \
+      vim \
+      wget \
+      xauth \
+      zip \
+      ncdu \
+      asciinema \
+      zsh \
+      neovim \
+      fish \
+      unzip \
+      zstd && \
+      # Configure FIPS-compliant policies
+    	update-crypto-policies --set FIPS
+
+    # Install starship
+    curl -sS https://starship.rs/install.sh | sh -s -- --yes
+
     # install and start code-server
     curl -fsSL https://code-server.dev/install.sh | sh -s -- --method=standalone --prefix=/tmp/code-server --version 4.8.3
     /tmp/code-server/bin/code-server --auth none --port 13337 >/tmp/code-server.log 2>&1 &
@@ -47,6 +109,10 @@ resource "coder_agent" "main" {
       echo "Installing dotfiles from $DOTFILES_URI"
       coder dotfiles "$DOTFILES_URI" --yes
     fi
+
+    # https://github.com/Frederic-Boulanger-UPS/docker-ubuntu-novnc/tree/master
+    RESOLUTION=1920x1080 
+    /startup.sh >/tmp/novnc.log 2>&1 &
 
   EOT
 }
@@ -59,6 +125,13 @@ resource "coder_app" "novnc" {
   icon         = ""
   subdomain    = false
   share        = "owner"
+
+  healthcheck {
+    url       = "http://127.0.0.1:6079/api/health"
+    interval  = 3
+    threshold = 10
+  }
+
 }
 
 resource "coder_app" "code-server" {
