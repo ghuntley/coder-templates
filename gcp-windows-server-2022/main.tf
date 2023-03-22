@@ -207,11 +207,10 @@ resource "coder_agent" "main" {
     choco install -y sudo
 
     #--- Browsers ---
-    #choco install -y firefox
+    choco install -y firefox
     #choco install -y firefox-dev
     choco install -y googlechrome
     #choco install -y googlechrome.canary
-    #choco install -y microsoft-edge
 
     #--- Sysadmin ---
     #choco install -y putty
