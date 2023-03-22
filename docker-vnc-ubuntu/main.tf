@@ -39,85 +39,6 @@ resource "coder_agent" "main" {
   startup_script         = <<-EOT
     set -e
     
-    sudo apt-get update && apt-get update && apt-get install --yes \
-      apt-transport-https \
-      apt-utils \
-      bash \
-      bash-completion \
-      bat \
-      bats \
-      bind9-dnsutils \
-      build-essential \
-      ca-certificates \
-      cmake \
-      crypto-policies \
-      curl \
-      fd-find \
-      file \
-      git \
-      gnupg \
-      graphviz \
-      htop \
-      httpie \
-      inetutils-tools \
-      iproute2 \
-      iputils-ping \
-      iputils-tracepath \
-      jq \
-      language-pack-en \
-      less \
-      lsb-release \
-      man \
-      meld \
-      net-tools \
-      openssh-server \
-      openssl \
-      pkg-config \
-      python3 \
-      python3-pip \
-      rsync \
-      shellcheck \
-      strace \
-      stow \
-      sudo \
-      tcptraceroute \
-      termshark \
-      tmux \
-      traceroute \
-      vim \
-      wget \
-      xauth \
-      zip \
-      ncdu \
-      asciinema \
-      zsh \
-      neovim \
-      fish \
-      unzip \
-      zstd && \
-      # Configure FIPS-compliant policies
-    	update-crypto-policies --set FIPS
-
-    # Install starship
-    curl -sS https://starship.rs/install.sh | sh -s -- --yes
-
-    # See https://github.com/cli/cli/issues/6175#issuecomment-1235984381 for proof
-    # the apt repository is unreliable
-    curl -L https://github.com/cli/cli/releases/download/v2.25.0/gh_2.25.0_linux_amd64.deb -o gh.deb && \
-      dpkg -i gh.deb && rm gh.deb
-
-    curl https://nixos.org/releases/nix/nix-2.9.2/install | sh
-
-    nix-env -iA cachix -f https://cachix.org/api/v1/install \
-      && cachix use cachix
-
-    nix-env -i direnv \
-      direnv hook bash >> /root/.bashrc
-
-    nix-env -iA cachix -f https://cachix.org/api/v1/install && \
-      cachix use devenv && \
-      nix-env -if https://github.com/cachix/devenv/tarball/latest
-
     if [ -n "$DOTFILES_URI" ]; then
       echo "Installing dotfiles from $DOTFILES_URI"
       coder dotfiles "$DOTFILES_URI" --yes
@@ -127,7 +48,7 @@ resource "coder_agent" "main" {
     curl -fsSL https://code-server.dev/install.sh | sh -s -- --method=standalone --prefix=/tmp/code-server --version 4.8.3
     /tmp/code-server/bin/code-server --auth none --port 13337 >/tmp/code-server.log 2>&1 &
 
-
+    # start novnc
     # https://github.com/Frederic-Boulanger-UPS/docker-ubuntu-novnc/tree/master
     export RESOLUTION=1920x1080
     /startup.sh >/tmp/novnc.log 2>&1 &
@@ -238,17 +159,19 @@ resource "docker_volume" "nix_volume" {
   }
 }
 
-data "docker_registry_image" "coder_image" {
-  name = "fredblgr/ubuntu-novnc:20.04"
-}
-
 resource "docker_image" "coder_image" {
-  name          = data.docker_registry_image.coder_image.name
-  pull_triggers = [data.docker_registry_image.coder_image.sha256_digest]
-
+  name = "coder-base-${data.coder_workspace.me.owner}-${lower(data.coder_workspace.me.name)}"
+  build {
+    context    = "./images/"
+    dockerfile = "Dockerfile"
+  }
+  triggers = {
+    dir_sha1 = sha1(join("", [for f in fileset(path.module, "images/*") : filesha1(f)]))
+  }
   # Keep alive for other workspaces to use upon deletion
   keep_locally = true
 }
+
 
 resource "docker_container" "workspace" {
 
@@ -264,7 +187,7 @@ resource "docker_container" "workspace" {
   }
 
   count = data.coder_workspace.me.start_count
-  image = data.docker_registry_image.coder_image.name
+  image = docker_image.coder_image.name
   # Uses lower() to avoid Docker restriction on container names.
   name = "coder-${data.coder_workspace.me.owner}-${lower(data.coder_workspace.me.name)}"
   # Hostname makes the shell more user friendly: coder@my-workspace:~$
@@ -311,6 +234,6 @@ resource "coder_metadata" "container_info" {
 
   item {
     key   = "image"
-    value = data.docker_registry_image.coder_image.name
+    value = docker_image.coder_image.name
   }
 }
