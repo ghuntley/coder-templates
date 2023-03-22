@@ -1,15 +1,15 @@
 FROM fredblgr/ubuntu-novnc:20.04
 
-# Add a user `ghuntley` so that you're not developing as the `root` user
-RUN useradd ghuntley \
+# Add a user `ubuntu` so that you're not developing as the `root` user
+RUN useradd ubuntu \
     --create-home \
     --shell=/bin/bash \
     --uid=1000 \
     --user-group && \
 	mkdir -p /etc/sudoers.d && \
-    echo "ghuntley ALL=(ALL) NOPASSWD:ALL" >>/etc/sudoers.d/nopasswd && \
+    echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >>/etc/sudoers.d/nopasswd && \
 	groupadd docker && \
-	usermod -aG docker ghuntley
+	usermod -aG docker ubuntu
 
 # Install packages from apt repositories
 ARG DEBIAN_FRONTEND="noninteractive"
@@ -106,19 +106,41 @@ RUN echo "PermitUserEnvironment yes" >>/etc/ssh/sshd_config && \
 
 # Install Nix
 RUN addgroup --system nixbld \
-  && adduser ghuntley nixbld \
+  && adduser ubuntu nixbld \
   && for i in $(seq 1 30); do useradd -ms /bin/bash nixbld$i &&  adduser nixbld$i nixbld; done \
-  && mkdir -m 0755 /nix && chown ghuntley /nix \
+  && mkdir -m 0755 /nix && chown ubuntu /nix \
   && mkdir -p /etc/nix && echo 'sandbox = false' > /etc/nix/nix.conf
 
 CMD /bin/bash -l
-USER ghuntley
-ENV USER ghuntley
-WORKDIR /home/ghuntley
+USER ubuntu
+ENV USER ubuntu
+WORKDIR /home/ubuntu
+
+RUN USERNAME='ubuntu' touch .bash_profile \
+ && curl https://nixos.org/releases/nix/nix-2.9.2/install | sh
+
+RUN echo '. /home/ubuntu/.nix-profile/etc/profile.d/nix.sh' >> /home/ubuntu/.bashrc
+RUN mkdir -p /home/ubuntu/.config/nixpkgs && echo '{ allowUnfree = true; }' >> /home/ubuntu/.config/nixpkgs/config.nix
+
+# Install cachix
+RUN . /home/ubuntu/.nix-profile/etc/profile.d/nix.sh \
+  && nix-env -iA cachix -f https://cachix.org/api/v1/install \
+  && cachix use cachix
+
+# Install direnv
+RUN . /home/ubuntu/.nix-profile/etc/profile.d/nix.sh \
+  && nix-env -i direnv \
+  && direnv hook bash >> /home/ubuntu/.bashrc
+
+# Install devenv
+RUN . /home/ubuntu/.nix-profile/etc/profile.d/nix.sh \
+	nix-env -iA cachix -f https://cachix.org/api/v1/install && \
+    cachix use devenv && \
+    nix-env -if https://github.com/cachix/devenv/tarball/latest
 
 # Start SSH service
 EXPOSE 22
 CMD ["/usr/sbin/sshd","-D"]
 
 # Run as
-USER ghuntley
+USER root

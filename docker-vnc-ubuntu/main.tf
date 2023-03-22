@@ -50,20 +50,20 @@ resource "coder_agent" "main" {
 
     # start novnc
     # https://github.com/Frederic-Boulanger-UPS/docker-ubuntu-novnc/tree/master
-    export RESOLUTION=1920x1080
-    export USERNAME=`id -u ghuntley`
-    export USERID=`id -u ghuntley`
-    export PASSWORD="${data.coder_parameter.admin_password.value}"
+    export RESOLUTION=1280x720
+    #export USERNAME=ubuntu
+    #export USERID=`id -u ubuntu`
+    #export PASSWORD='data.coder_parameter.admin_password.value"
     /startup.sh >/tmp/novnc.log 2>&1 &
 
   EOT
 }
 
-data "coder_parameter" "admin_password" {
-  name = "Password for logging in via VNC"
-  default = "Hunter2!Hunter2"
-  mutable = true
-}
+#data "coder_parameter" "admin_password" {
+#  name = "Password for logging in via VNC"
+#  default = "Hunter2!Hunter2"
+#  mutable = true
+#}
 
 
 resource "coder_app" "novnc" {
@@ -87,7 +87,7 @@ resource "coder_app" "code-server" {
   agent_id     = coder_agent.main.id
   slug         = "code-server"
   display_name = "code-server"
-  url          = "http://localhost:13337/?folder=/home/ghuntley"
+  url          = "http://localhost:13337/?folder=/home/ubuntu"
   icon         = "/icon/code.svg"
   subdomain    = false
   share        = "owner"
@@ -210,7 +210,7 @@ resource "docker_container" "workspace" {
     ip   = "host-gateway"
   }
   volumes {
-    container_path = "/home/ghuntley/"
+    container_path = "/home/ubuntu/"
     volume_name    = docker_volume.home_volume.name
     read_only      = false
   }
@@ -242,11 +242,11 @@ resource "coder_metadata" "container_info" {
   count       = data.coder_workspace.me.start_count
   resource_id = docker_container.workspace[0].id
 
-  item {
-      key       = "administrator password"
-      value     = data.coder_parameter.admin_password.value
-      sensitive = true
-  }  
+  #item {
+  #    key       = "administrator password"
+  #    value     = data.coder_parameter.admin_password.value
+  #    sensitive = true
+  #}  
     
   item {
     key   = "image"
