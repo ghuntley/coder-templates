@@ -149,7 +149,7 @@ resource "docker_volume" "nix_volume" {
 
 
 data "docker_registry_image" "coder_image" {
-  name = "ubuntu:precise"
+  name = "fredblgr/ubuntu-novnc:20.04"
 }
 
 resource "docker_image" "coder_image" {
