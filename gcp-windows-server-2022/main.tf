@@ -217,8 +217,8 @@ resource "coder_agent" "main" {
     #choco install -y winscp
 
     #--- Development ---
-    choco install -y dotpeek
-    choco install -y linqpad5
+    #choco install -y dotpeek
+    #choco install -y linqpad5
     
     #choco install -y java.jdk
     #choco install -y javaruntime
