@@ -12,48 +12,8 @@ terraform {
   }
 }
 
-# Admin parameters
-variable "step1_docker_host_warning" {
-  description = <<-EOF
-  Is Docker running on the Coder host?
-
-  This template will use the Docker socket present on
-  the Coder host, which is not necessarily your local machine.
-
-  You can specify a different host in the template file and
-  surpress this warning.
-  EOF
-  validation {
-    condition     = contains(["Continue using /var/run/docker.sock on the Coder host"], var.step1_docker_host_warning)
-    error_message = "Cancelling template create."
-  }
-
-  sensitive = true
-}
-variable "step2_arch" {
-  description = "arch: What architecture is your Docker host on?"
-  validation {
-    condition     = contains(["amd64", "arm64", "armv7"], var.step2_arch)
-    error_message = "Value must be amd64, arm64, or armv7."
-  }
-  sensitive = true
-}
-variable "step3_OS" {
-  description = <<-EOF
-  What operating system is your Coder host on?
-  EOF
-
-  validation {
-    condition     = contains(["MacOS", "Windows", "Linux"], var.step3_OS)
-    error_message = "Value must be MacOS, Windows, or Linux."
-  }
-  sensitive = true
-}
-
-# https://ppswi.us/noVNC/app/images/icons/novnc-192x192.png
-
 provider "docker" {
-  host = var.step3_OS == "Windows" ? "npipe:////.//pipe//docker_engine" : "unix:///var/run/docker.sock"
+
 }
 
 provider "coder" {
@@ -67,7 +27,7 @@ resource "coder_app" "novnc" {
   agent_id      = coder_agent.dev.id
   name          = "noVNC Desktop"
   icon          = "https://ppswi.us/noVNC/app/images/icons/novnc-192x192.png"
-  url           = "http://localhost:6081"
+  url           = "http://localhost:6080"
   relative_path = true
 }
 
@@ -81,57 +41,54 @@ resource "coder_app" "code-server" {
 }
 
 resource "coder_agent" "dev" {
-  arch           = var.step2_arch
+  arch           = "amd64"
   os             = "linux"
   startup_script = <<EOT
-#!/bin/bash
-set -euo pipefail
+    #!/bin/bash
+    set -euo pipefail
 
-# start code-server
-code-server --auth none --port 13337 &
+    # start code-server
+    code-server --auth none --port 13337 &
 
-# start VNC
-echo "Creating desktop..."
-mkdir -p "$XFCE_DEST_DIR"
-cp -rT "$XFCE_BASE_DIR" "$XFCE_DEST_DIR"
-
-# Skip default shell config prompt.
-cp /etc/zsh/newuser.zshrc.recommended $HOME/.zshrc
-
-echo "Initializing Supervisor..."
-nohup supervisord
+    echo "Initializing Supervisor..."
+    nohup supervisord
   EOT
 }
 
-variable "docker_image" {
-  description = "What Docker image would you like to use for your workspace?"
-  default     = "desktop-base"
-
-  # List of images available for the user to choose from.
-  # Delete this condition to give users free text input.
-  validation {
-    condition     = contains(["desktop-base"], var.docker_image)
-    error_message = "Invalid Docker image!"
+resource "docker_volume" "home_volume" {
+  name = "coder-${data.coder_workspace.me.id}-home"
+  # Protect the volume from being deleted due to changes in attributes.
+  lifecycle {
+    ignore_changes = all
   }
-
-  # Prevents admin errors when the image is not found
-  validation {
-    condition     = fileexists("images/${var.docker_image}.Dockerfile")
-    error_message = "Invalid Docker image. The file does not exist in the images directory."
+  # Add labels in Docker to keep track of orphan resources.
+  labels {
+    label = "coder.owner"
+    value = data.coder_workspace.me.owner
+  }
+  labels {
+    label = "coder.owner_id"
+    value = data.coder_workspace.me.owner_id
+  }
+  labels {
+    label = "coder.workspace_id"
+    value = data.coder_workspace.me.id
+  }
+  # This field becomes outdated if the workspace is renamed but can
+  # be useful for debugging or cleaning out dangling volumes.
+  labels {
+    label = "coder.workspace_name_at_creation"
+    value = data.coder_workspace.me.name
   }
 }
 
-resource "docker_volume" "home_volume" {
-  name = "coder-${data.coder_workspace.me.owner}-${lower(data.coder_workspace.me.name)}-root"
+data "docker_registry_image" "coder_image" {
+  name = "fredblgr/ubuntu-novnc:20.04"
 }
 
 resource "docker_image" "coder_image" {
-  name = "coder-base-${data.coder_workspace.me.owner}-${lower(data.coder_workspace.me.name)}"
-  build {
-    path       = "./images/"
-    dockerfile = "${var.docker_image}.Dockerfile"
-    tag        = ["coder-${var.docker_image}:v0.3"]
-  }
+  name          = data.docker_registry_image.coder_image.name
+  pull_triggers = [data.docker_registry_image.coder_image.sha256_digest]
 
   # Keep alive for other workspaces to use upon deletion
   keep_locally = true
@@ -140,6 +97,7 @@ resource "docker_image" "coder_image" {
 resource "docker_container" "workspace" {
   count = data.coder_workspace.me.start_count
   image = docker_image.coder_image.latest
+  
   # Uses lower() to avoid Docker restriction on container names.
   name = "coder-${data.coder_workspace.me.owner}-${lower(data.coder_workspace.me.name)}"
   # Hostname makes the shell more user friendly: coder@my-workspace:~$
