@@ -135,6 +135,9 @@ resource "google_compute_instance" "dev" {
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     
+    # Install vim
+    choco install -y vim
+
     # start Coder agent init script (see startup_script above)
     ${coder_agent.main.init_script}
 
