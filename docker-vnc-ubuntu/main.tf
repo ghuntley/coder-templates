@@ -147,7 +147,6 @@ resource "docker_volume" "nix_volume" {
   }
 }
 
-
 data "docker_registry_image" "coder_image" {
   name = "fredblgr/ubuntu-novnc:20.04"
 }
